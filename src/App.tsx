@@ -1,6 +1,8 @@
 import './style/index.scss';
+import './style/component/message.scss'
 import React, { useEffect, useState } from 'react';
 import { TokenSelector } from './component/TokenSelector';
+import LoadingDot from './component/LoadingDot';
 
 const Main: React.FC = () => {
   const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
@@ -10,6 +12,9 @@ const Main: React.FC = () => {
   const [amount, setAmount] = useState<number>(0)
   const [swapRate, setSwapRate] = useState<any>({})
   const [loading, setLoading] = useState<boolean>(false)
+  const [swapMessage, setSwapMessage] = useState<string | null>(null);
+
+
   const toggleTokenSelectorOpen = () => setIsTokenSelectorOpen(!isTokenSelectorOpen);
 
 
@@ -53,6 +58,58 @@ const Main: React.FC = () => {
     fetchCurrencyVals()
   }, [])
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enteredAmount = parseFloat(e.target.value)
+    if (!isNaN(enteredAmount) && enteredAmount >= 0) {
+      setAmount(enteredAmount)
+    } else {
+      setAmount(0)
+    }
+  }
+
+  const handleCurrencySelect = (currency: string) => {
+    if (!paidCurrency) {
+      setPaidCurrency(currency)
+    } else {
+      setReceivingCurrency(currency)
+    }
+    setIsTokenSelectorOpen(false)
+  }
+
+  const calculateAmountReceived = () => {
+    if (swapRate[paidCurrency] && swapRate(receivingCurrency)) {
+      const totalVal = amount * parseFloat(swapRate[paidCurrency])
+      return totalVal / parseFloat(swapRate[receivingCurrency])
+    }
+    return 0
+  }
+
+  const isSwapDisabled = amount > balance || !receivingCurrency || amount <= 0
+
+  const handleSwap = async () => {
+    if (!isSwapDisabled) {
+      try {
+        setLoading(true)
+        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/post-swap', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paidCurrency,
+            receivingCurrency,
+            amount
+          })
+        })
+        const data = await response.json()
+        setSwapMessage(data.message || 'Swap successful')
+      } catch (err: any) {
+        setSwapMessage('Failed to swap. Please try again!')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
   return (
     <>
       <div>
@@ -70,11 +127,15 @@ const Main: React.FC = () => {
 
                 <div className="amount-input">
                   <div className="input">
-                    <input type="number" placeholder='0' />
+                    <input
+                      type="number"
+                      placeholder='0'
+                      value={amount > 0 ? amount : ''}
+                      onChange={handleAmountChange} />
                   </div>
                   <button type="button" className="currency-label" onClick={toggleTokenSelectorOpen}>
                     <div className="token CTC" data-token-size="28"></div>
-                    <strong className="name">CTC</strong>
+                    <strong className="name">{paidCurrency}</strong>
                   </button>
                 </div>
 
@@ -83,7 +144,7 @@ const Main: React.FC = () => {
                   </div>
                   <div className="rt">
                     <div className="balance">
-                      <span>Balance: 10</span>
+                      <span>Balance: {balance}</span>
                     </div>
                   </div>
                 </div>
@@ -100,36 +161,42 @@ const Main: React.FC = () => {
 
                 <div className="amount-input">
                   <div className="input">
-                    <input type="number" placeholder='0' readOnly />
+                    <input
+                      type="number"
+                      placeholder='0'
+                      value={calculateAmountReceived() > 0 ? calculateAmountReceived().toFixed(2) : 0}
+                      readOnly />
                   </div>
                   <button type="button" className="currency-label select" onClick={toggleTokenSelectorOpen}>
-                    Select token
+                    {receivingCurrency || 'Select token'}
                   </button>
                 </div>
 
                 <div className="item-flex amount">
                   <div className="rt">
                     <div className="balance">
-                      <span>Balance: 0</span>
+                      <span>Balance: {balance}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="button-wrap">
-                <button type="button" className="normal" disabled={true} onClick={() => { }}>
-                  Swap
+                <button type="button" className="normal" disabled={isSwapDisabled} onClick={handleSwap}>
+                  {loading ? <LoadingDot size='md' displayType='inline ' /> : 'Swap'}
+
                 </button>
               </div>
+
+              {swapMessage && <div className='swap-message'></div>}
 
             </div>
           </div>
         </section>
-        <div>test</div>
       </div>
 
       {isTokenSelectorOpen && (
-        <TokenSelector onClose={() => setIsTokenSelectorOpen(false)} />
+        <TokenSelector onClose={() => setIsTokenSelectorOpen(false)} onSelect={handleCurrencySelect} />
       )}
     </>
   );

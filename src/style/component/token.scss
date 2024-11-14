@@ -27,6 +27,7 @@
   }
 
   $tokens: GCRE, ETH, CTC, GATE, WCTC, USDC, USDT, Wrapped, Mint, Default, USDC-T, USDT-T;
+
   @each $token in $tokens {
     &.#{$token} {
       &::before {
@@ -38,13 +39,15 @@
 
   @for $i from 8 through 50 {
     &[data-token-size="#{$i}"] {
-      width: #{$i}px; height: #{$i}px;
+      width: #{$i}px;
+      height: #{$i}px;
     }
   }
 }
 
 .token-wrap {
   position: relative;
+
   .token {
     flex-shrink: 0;
   }
@@ -52,37 +55,45 @@
   .half {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+
     &::before {
       width: 13px;
       background-size: cover;
     }
+
     &::after {
       display: none;
       left: 3px;
     }
+
     &:nth-child(2) {
       position: absolute;
       top: 0;
       left: 15px;
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
+
       &::before {
         width: 13px;
         background-position: 100% 0;
       }
+
       &::after {
         display: block;
       }
     }
   }
+
   &:has(.double) {
     display: flex;
   }
+
   .double {
-    + .double {
+    +.double {
       margin-left: -5px;
     }
   }
+
   .sm {
     position: absolute;
     right: -2px;

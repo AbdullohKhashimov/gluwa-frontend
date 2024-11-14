@@ -1,0 +1,45 @@
+Solution 
+Functionality of App.tsx which is declared as Main handles followings:
+Input an amount a user wishes to swap
+Select the given currency a user wants to pay with (payingCurrency)
+Choose the currency they want to receive (receivingCurrency)
+View thier balance and the calculated amount they would receive if the transaction goes successful
+Perform a swap operation through API call that processes the transaction
+
+Used React Hooks (useEffect, useState): the functionality of useState is used for managing component states, and useEffect on the other hand is responsible for running side effects like fetching data. 
+
+Custom Components:
+TokenSelector -> A modal component that allows users to select a token.
+LoadingDot -> A loading indicator triggered during API calls
+
+State Managements:
+isTokenSelectorOpen -> responsible to track if the token selection modal is open or closed 
+payingCurrency -> (currency) responsible for the user to pay with a currency they wish to pay with. By default it is set to "CTC"
+receivingCurrency -> (currency) that is set to be received when a user selects from given currency list. Starts as an empty string until a selection is made
+balance -> responsible to hold the balance for the selected payingCurrency
+amount -> the amount the user wants to swap 
+swapRate -> is responsible for storing exchange rates fetched from API for various currencies.
+loading -> is responsible to be displayed while the request or (API) call is in progress
+swapMessage -> is responsible to display a message after attempting a swap which indicates success or error notifications.
+
+
+Handlers:
+
+hanldeAmountChange() -> has the responsibility of updating the amount state based on the user input ensuring only non-negative numbers are allowed.
+It parses the input value as a float type and checks if the parsed value is a valid number and is non-negative. If everything is correct then it updates the amount.
+
+handleCurrencySelect() -> is responsible to set the payingCurrency or receivingCurrency when a user selects a token and closes the TokenSelector. If payingCurrency is not set, it sets it as the selected currency.
+otherwise it sets the receivingCurrency.
+
+Calculator:
+calculateAmountReceived()-> the purpose of the calculator is to calculate how much of the receivingCurrency the user would get based on the current amount and swapRate. 
+It checks if the exchange rates exist for both parties (payingCurrency & receivingCurrency) if exists then it multiplies the entered amount by the exchange rate of payingCurrency. 
+Divides the result by the exchange rate of receivingCurrency to get the equivalent amount in the target currency. 
+
+
+API calls:
+useEffect(fetchBalance) -> it fetches and updates the balance when payingCurrency changes. It will call the API endpoint and retrieves the balance and update the balance with the value of payingCurrency.
+
+useEffect(fetchCurrencyValues) -> is responsible to fetch exchange rates when the component mounts. 
+
+handleSwap() -> sends the swap request to an API. If isSwapDisabled is false initiates the swap and sends a POST request with the selected currencies and amount. It will also display a message if the request is successful.

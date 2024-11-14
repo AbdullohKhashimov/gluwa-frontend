@@ -1,4 +1,5 @@
 import './style/index.scss';
+import "./style/component/message.scss"
 import { useEffect, useState } from 'react';
 import { TokenSelector } from './component/TokenSelector';
 import LoadingDot from './component/LoadingDot';
@@ -189,7 +190,7 @@ const Main: React.FC = () => {
                 </button>
               </div>
               {swapMessage && (
-                <div>
+                <div className='swap-message'>
                   {swapMessage}
                 </div>
               )}

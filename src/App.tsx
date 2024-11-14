@@ -1,10 +1,57 @@
 import './style/index.scss';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TokenSelector } from './component/TokenSelector';
 
 const Main: React.FC = () => {
   const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
+  const [paidCurrency, setPaidCurrency] = useState<string>("")
+  const [receivingCurrency, setReceivingCurrency] = useState<string>('')
+  const [balance, setBalance] = useState<number>(0)
+  const [amount, setAmount] = useState<number>(0)
+  const [swapRate, setSwapRate] = useState<any>({})
+  const [loading, setLoading] = useState<boolean>(false)
   const toggleTokenSelectorOpen = () => setIsTokenSelectorOpen(!isTokenSelectorOpen);
+
+
+  // Fetching user's balance from API 1
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-balance')
+        console.log('response:', response)
+        const data = await response.json()
+        console.log('data:', data)
+
+        setBalance(data[paidCurrency] || 0)
+      } catch (err: any) {
+        throw new Error(`Failed to fetch: ${err.message}`)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBalance()
+  }, [paidCurrency])
+
+  // Fetching the currency values from API 2 
+  useEffect(() => {
+    const fetchCurrencyVals = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-price')
+        console.log('response:', response)
+        const data = await response.json()
+        console.log('data:', data)
+
+        setSwapRate(data)
+      } catch (err: any) {
+        throw new Error(`Failed to fetch currency values: ${err.message}`)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCurrencyVals()
+  }, [])
 
   return (
     <>

@@ -7,7 +7,7 @@ interface LoadingDotProps {
 
 const LoadingDot: React.FC<LoadingDotProps> = ({ size = '', displayType = 'block' }) => {
   const sizeClass = size ? `dot-loading ${size}` : 'dot-loading';
-  const displayClass = displayType === 'inline' ? 'inline' : ''; 
+  const displayClass = displayType === 'inline' ? 'inline' : '';
 
   return (
     <div className={`${sizeClass} ${displayClass}`}>

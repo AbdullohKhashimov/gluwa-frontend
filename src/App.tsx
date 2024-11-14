@@ -1,115 +1,112 @@
 import './style/index.scss';
-import './style/component/message.scss'
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TokenSelector } from './component/TokenSelector';
 import LoadingDot from './component/LoadingDot';
 
 const Main: React.FC = () => {
   const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
-  const [paidCurrency, setPaidCurrency] = useState<string>("")
-  const [receivingCurrency, setReceivingCurrency] = useState<string>('')
-  const [balance, setBalance] = useState<number>(0)
-  const [amount, setAmount] = useState<number>(0)
-  const [swapRate, setSwapRate] = useState<any>({})
-  const [loading, setLoading] = useState<boolean>(false)
-  const [swapMessage, setSwapMessage] = useState<string | null>(null);
-
+  const [payingCurrency, setPayingCurrency] = useState<string>('CTC');
+  const [receivingCurrency, setReceivingCurrency] = useState<string>('');
+  const [balance, setBalance] = useState<number>(0);
+  const [amount, setAmount] = useState<number>(0);
+  const [swapRate, setSwapRate] = useState<any>({});
+  const [loading, setLoading] = useState<boolean>(false);
+  const [swapMessage, setSwapMessage] = useState<string>('')
 
   const toggleTokenSelectorOpen = () => setIsTokenSelectorOpen(!isTokenSelectorOpen);
 
-
-  // Fetching user's balance from API 1
+  // Fetch the user's balance from API 1
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        setLoading(true)
-        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-balance')
-        console.log('response:', response)
-        const data = await response.json()
-        console.log('data:', data)
-
-        setBalance(data[paidCurrency] || 0)
+        setLoading(true);
+        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-balance');
+        const data = await response.json();
+        setBalance(data[payingCurrency] || 0); // Assuming the balance is an object with currency keys
       } catch (err: any) {
-        throw new Error(`Failed to fetch: ${err.message}`)
+        throw new Error(`Failed to fetch balance ${err.message}`)
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchBalance()
-  }, [paidCurrency])
+    };
 
-  // Fetching the currency values from API 2 
+    fetchBalance();
+  }, [payingCurrency]);
+
+  // Fetch the currency values from API 2
   useEffect(() => {
-    const fetchCurrencyVals = async () => {
+    const fetchCurrencyValues = async () => {
       try {
-        setLoading(true)
-        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-price')
-        console.log('response:', response)
-        const data = await response.json()
-        console.log('data:', data)
-
-        setSwapRate(data)
+        setLoading(true);
+        const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/get-price');
+        const data = await response.json();
+        setSwapRate(data); // Assuming the response is an object like { 'CTC': '0.4577328', 'USDC': '0.9998875', ... }
       } catch (err: any) {
-        throw new Error(`Failed to fetch currency values: ${err.message}`)
+        throw new Error(`Failed to fetch currency value ${err.message}`)
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchCurrencyVals()
-  }, [])
+    };
+
+    fetchCurrencyValues();
+  }, []);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const enteredAmount = parseFloat(e.target.value)
+    const enteredAmount = parseFloat(e.target.value);
     if (!isNaN(enteredAmount) && enteredAmount >= 0) {
-      setAmount(enteredAmount)
+      setAmount(enteredAmount);
     } else {
-      setAmount(0)
+      setAmount(0);
     }
-  }
+  };
 
   const handleCurrencySelect = (currency: string) => {
-    if (!paidCurrency) {
-      setPaidCurrency(currency)
+    if (!payingCurrency) {
+      setPayingCurrency(currency);
     } else {
-      setReceivingCurrency(currency)
+      setReceivingCurrency(currency);
     }
-    setIsTokenSelectorOpen(false)
-  }
+
+    setIsTokenSelectorOpen(false);
+  };
 
   const calculateAmountReceived = () => {
-    if (swapRate[paidCurrency] && swapRate(receivingCurrency)) {
-      const totalVal = amount * parseFloat(swapRate[paidCurrency])
-      return totalVal / parseFloat(swapRate[receivingCurrency])
+    if (swapRate[payingCurrency] && swapRate[receivingCurrency]) {
+      const totalValue = amount * parseFloat(swapRate[payingCurrency]);
+      return totalValue / parseFloat(swapRate[receivingCurrency]);
     }
-    return 0
-  }
+    return 0;
+  };
 
-  const isSwapDisabled = amount > balance || !receivingCurrency || amount <= 0
+  const isSwapDisabled = amount > balance || !receivingCurrency || amount <= 0;
 
+  // Handle the swap (API 3)
   const handleSwap = async () => {
     if (!isSwapDisabled) {
       try {
-        setLoading(true)
+        setLoading(true);
         const response = await fetch('https://inhousedashboard-test-app.azurewebsites.net/api/Interview/post-swap', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            paidCurrency,
+            payingCurrency,
             receivingCurrency,
-            amount
-          })
-        })
-        const data = await response.json()
-        setSwapMessage(data.message || 'Swap successful')
-      } catch (err: any) {
-        setSwapMessage('Failed to swap. Please try again!')
+            amount,
+          }),
+        });
+        const data = await response.json();
+        // Handle the response, e.g., show success or update state
+        setSwapMessage(data.message || 'Swap successful!')
+      } catch (error) {
+        setSwapMessage('Error during swap, please try again')
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  };
+
   return (
     <>
       <div>
@@ -129,20 +126,19 @@ const Main: React.FC = () => {
                   <div className="input">
                     <input
                       type="number"
-                      placeholder='0'
+                      placeholder="0"
                       value={amount > 0 ? amount : ''}
-                      onChange={handleAmountChange} />
+                      onChange={handleAmountChange}
+                    />
                   </div>
                   <button type="button" className="currency-label" onClick={toggleTokenSelectorOpen}>
                     <div className="token CTC" data-token-size="28"></div>
-                    <strong className="name">{paidCurrency}</strong>
+                    <strong className="name">{payingCurrency}</strong>
                   </button>
                 </div>
 
                 <div className="amount item-flex">
                   <div className="lt">
-                  </div>
-                  <div className="rt">
                     <div className="balance">
                       <span>Balance: {balance}</span>
                     </div>
@@ -163,9 +159,10 @@ const Main: React.FC = () => {
                   <div className="input">
                     <input
                       type="number"
-                      placeholder='0'
+                      placeholder="0"
                       value={calculateAmountReceived() > 0 ? calculateAmountReceived().toFixed(2) : 0}
-                      readOnly />
+                      readOnly
+                    />
                   </div>
                   <button type="button" className="currency-label select" onClick={toggleTokenSelectorOpen}>
                     {receivingCurrency || 'Select token'}
@@ -175,21 +172,27 @@ const Main: React.FC = () => {
                 <div className="item-flex amount">
                   <div className="rt">
                     <div className="balance">
-                      <span>Balance: {balance}</span>
+                      <span>Balance: 0</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="button-wrap">
-                <button type="button" className="normal" disabled={isSwapDisabled} onClick={handleSwap}>
-                  {loading ? <LoadingDot size='md' displayType='inline ' /> : 'Swap'}
-
+                <button
+                  type="button"
+                  className="normal"
+                  disabled={isSwapDisabled}
+                  onClick={handleSwap}
+                >
+                  {loading ? <LoadingDot size="md" displayType="inline" /> : 'Swap'}
                 </button>
               </div>
-
-              {swapMessage && <div className='swap-message'></div>}
-
+              {swapMessage && (
+                <div>
+                  {swapMessage}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -200,6 +203,9 @@ const Main: React.FC = () => {
       )}
     </>
   );
-}
+};
 
 export { Main as default };
+
+
+
